@@ -1,0 +1,43 @@
+{
+  "name": "llm-data-extraction-clustering",
+  "version": "1.0.0",
+  "description": "LLM-powered data extraction and clustering pipeline for job market analysis",
+  "main": "dist/worker.js",
+  "scripts": {
+    "build": "tsc",
+    "filter-emails": "ts-node src/filter-emails.ts",
+    "extract-urls": "ts-node src/extract-urls.ts",
+    "scrape": "ts-node src/scrape-all.ts",
+    "analyze": "ts-node src/analyze-jobs.ts",
+    "subcluster": "ts-node src/subcluster-analysis.ts",
+    "charts": "ts-node src/generate-charts.ts",
+    "chart-images": "ts-node src/generate-chart-images.ts",
+    "diagrams": "ts-node src/generate-diagram-images.ts"
+  },
+  "keywords": [
+    "llm",
+    "data-extraction",
+    "clustering",
+    "embeddings",
+    "openai",
+    "k-means",
+    "typescript",
+    "playwright",
+    "machine-learning"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "ml-kmeans": "^7.0.0",
+    "playwright": "^1.40.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "scrapegraph-js": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

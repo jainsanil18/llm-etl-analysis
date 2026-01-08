@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freelance Job Market Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a24;
+      --bg-hover: #242432;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-1: #6366f1;
+      --accent-2: #f43f5e;
+      --accent-3: #10b981;
+      --border: #27272a;
+      --glow: rgba(99, 102, 241, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .dashboard {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-1) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px var(--glow);
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--accent-1);
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1200px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .chart-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .chart-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .chart-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
+      border-radius: 2px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 350px;
+    }
+
+    .chart-container.tall {
+      height: 500px;
+    }
+
+    #treemap {
+      width: 100%;
+      height: 100%;
+    }
+
+    .treemap-cell {
+      stroke: var(--bg-primary);
+      stroke-width: 2px;
+      transition: opacity 0.2s;
+    }
+
+    .treemap-cell:hover {
+      opacity: 0.8;
+    }
+
+    .treemap-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      fill: white;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    .treemap-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      fill: rgba(255,255,255,0.7);
+      pointer-events: none;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--accent-1);
+      text-decoration: none;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+      max-width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .tooltip-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-1);
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <h1>Freelance Job Market Analysis</h1>
+      <p class="subtitle">ML-powered clustering of 486 freelance opportunities</p>
+    </header>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value">741</div>
+        <div class="stat-label">Total Jobs Scraped</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">486</div>
+        <div class="stat-label">Valid Jobs Analyzed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">6</div>
+        <div class="stat-label">Market Clusters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">460</div>
+        <div class="stat-label">Jobs with Budgets</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Chart 1: Pie/Donut - Job Category Distribution -->
+      <div class="chart-card">
+        <h2 class="chart-title">Job Category Distribution</h2>
+        <div class="chart-container">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Bar Chart - Cluster Sizes -->
+      <div class="chart-card">
+        <h2 class="chart-title">Cluster Size Comparison</h2>
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 7: Budget Distribution -->
+      <div class="chart-card">
+        <h2 class="chart-title">Budget Distribution</h2>
+        <div class="chart-container">
+          <canvas id="budgetChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Treemap - Hierarchical View -->
+      <div class="chart-card">
+        <h2 class="chart-title">Market Treemap (Clusters → Sub-clusters)</h2>
+        <div class="chart-container tall">
+          <svg id="treemap"></svg>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Generated on Wednesday, January 7, 2026</p>
+      <p>Analysis via K-means clustering with OpenAI embeddings</p>
+    </footer>
+  </div>
+
+  <div class="tooltip" id="tooltip">
+    <div class="tooltip-title"></div>
+    <div class="tooltip-value"></div>
+  </div>
+
+  <script>
+    // Data from analysis
+    const clusterData = [{"id":3,"name":"Modern Web Apps (Next.js/Lovable)","size":143,"percentage":29.4238683127572,"description":"We are seeking a skilled Full-Stack Developer to create modern web applications, primarily utilizing React, TypeScript, and Next.js for the frontend, with Supabase or similar technologies for the backend. The projects focus on building user-centric platforms for various use cases, such as directories, goal-setting tools, and SaaS solutions, with a strong emphasis on clean code, UI/UX refinement, and API integration. Candidates should have experience in developing production-quality applications, managing data-heavy dashboards, and implementing seamless user flows, with a portfolio demonstrating relevant skills and project outcomes.","topJobs":["Proven Full-Stack Developer Needed for Sport-Centric Web App (React / Modern Stack)","Full-Stack Next.js Developer for Modern B2B/B2C Web Platform (Fixed-Price Project)","Lovable/Replit AI Developer Experts To Finish App - Contract to Hire"]},{"id":2,"name":"Multi-Agent AI Systems","size":97,"percentage":19.958847736625515,"description":"","topJobs":["Senior AI Engineer Needed to Build Multi-Agent Orchestration Platform (Python/LangGraph) - Contract to Hire","Build an AI app MVP for health care","AI platform with SDK (, web app, iOS & Android) LLM-agnostic, multi-model From Open Source Wrappers"]},{"id":5,"name":"Full-Stack (React Native)","size":84,"percentage":17.28395061728395,"description":"","topJobs":["React.js & Node.js Full Stack Developer for Web App Development","Experienced Full-Stack Developer Needed for Ongoing Project","Looking for an Experienced Full Stack Developer (React Native,reacts.js, node, J's)"]},{"id":4,"name":"Web Portals & Python Dev","size":65,"percentage":13.37448559670782,"description":"","topJobs":["Web App and Portal Development To Call the Working APIs and Render the results in Web Portal","Python Backend Developer Needed for Bug Fixes","Python Developer Needed"]},{"id":1,"name":"AI Voice & Agents","size":49,"percentage":10.08230452674897,"description":"","topJobs":["AI Agent Developer Needed – Social Media Automation & Lead Management","AI Voice & Chat Support System  (Multi‑Agent, RAG, Jira + HubSpot, 15 Day Delivery)","Build a Multi-Agent AI “Executive Team” for a Neuroscience-Based Digital Platform - Contract to Hire"]},{"id":0,"name":"AI Full-Stack & SaaS","size":48,"percentage":9.876543209876543,"description":"","topJobs":["AI Full Stack Engineer Needed for Innovative Project","Full-Stack Web Developer Needed for SaaS Platform Development","Full-Stack Developer Needed for Web Application Project"]}];
+    const budgetData = {"$0-100":155,"$100-250":65,"$250-500":50,"$500-1K":52,"$1K-2.5K":70,"$2.5K-5K":28,"$5K+":40};
+    const treemapData = {"name":"All Jobs","children":[{"name":"Modern Web Apps (Next.js/Lovable)","value":143},{"name":"Multi-Agent AI Systems","children":[{"name":"AI Chat & Blockchain","value":42},{"name":"AI SaaS Founders","value":27},{"name":"Multi-Agent Systems","value":26},{"name":"Voice AI Development","value":21}]},{"name":"Full-Stack (React Native)","value":84},{"name":"Web Portals & Python Dev","value":65},{"name":"AI Voice & Agents","children":[{"name":"AI Chat & Blockchain","value":42},{"name":"AI SaaS Founders","value":27},{"name":"Multi-Agent Systems","value":26},{"name":"Voice AI Development","value":21}]},{"name":"AI Full-Stack & SaaS","value":48}]};
+    const colors = ["#6366f1","#f43f5e","#10b981","#f59e0b","#8b5cf6","#06b6d4","#ec4899","#84cc16"];
+
+    // Chart.js defaults
+    Chart.defaults.color = '#a1a1aa';
+    Chart.defaults.font.family = "'Outfit', sans-serif";
+
+    // 1. Pie/Donut Chart
+    new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: clusterData.map(c => c.name),
+        datasets: [{
+          data: clusterData.map(c => c.size),
+          backgroundColor: colors,
+          borderColor: '#0a0a0f',
+          borderWidth: 3,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '55%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'rectRounded',
+              font: { size: 11 }
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1a1a24',
+            borderColor: '#27272a',
+            borderWidth: 1,
+            titleFont: { weight: 600 },
+            bodyFont: { family: "'JetBrains Mono', monospace" },
+            padding: 12,
+            callbacks: {
+              label: (ctx) => {
+                const cluster = clusterData[ctx.dataIndex];
+                return ` ${cluster.size} jobs (${cluster.percentage.toFixed(1)}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // 3. Bar Chart
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: clusterData.map(c => c.name),
+        datasets: [{
+          label: 'Number of Jobs',
+          data: clusterData.map(c => c.size),
+          backgroundColor: colors.map(c => c + 'cc'),
+          borderColor: colors,
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1a24',
+            borderColor: '#27272a',
+            borderWidth: 1,
+            padding: 12,
+            callbacks: {
+              afterLabel: (ctx) => {
+                const cluster = clusterData[ctx.dataIndex];
+                return `${cluster.percentage.toFixed(1)}% of market`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#27272a' },
+            ticks: { font: { family: "'JetBrains Mono', monospace" } }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { 
+              font: { size: 11 }
+            }
+          }
+        }
+      }
+    });
+
+    // 7. Budget Distribution
+    new Chart(document.getElementById('budgetChart'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(budgetData),
+        datasets: [{
+          label: 'Number of Jobs',
+          data: Object.values(budgetData),
+          backgroundColor: [
+            '#10b981aa', '#22c55eaa', '#84cc16aa', '#eab308aa', 
+            '#f59e0baa', '#f97316aa', '#ef4444aa'
+          ],
+          borderColor: [
+            '#10b981', '#22c55e', '#84cc16', '#eab308',
+            '#f59e0b', '#f97316', '#ef4444'
+          ],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1a24',
+            borderColor: '#27272a',
+            borderWidth: 1,
+            padding: 12
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: "'JetBrains Mono', monospace", size: 11 } }
+          },
+          y: {
+            grid: { color: '#27272a' },
+            ticks: { font: { family: "'JetBrains Mono', monospace" } }
+          }
+        }
+      }
+    });
+
+    // 2. Treemap with D3
+    const treemapSvg = d3.select('#treemap');
+    const container = document.querySelector('.chart-container.tall');
+    const width = container.clientWidth - 32;
+    const height = 460;
+    
+    treemapSvg.attr('width', width).attr('height', height);
+
+    const treemapColors = d3.scaleOrdinal()
+      .domain(clusterData.map(c => c.name))
+      .range(colors);
+
+    const root = d3.hierarchy(treemapData)
+      .sum(d => d.value || 0)
+      .sort((a, b) => b.value - a.value);
+
+    d3.treemap()
+      .size([width, height])
+      .paddingOuter(4)
+      .paddingInner(2)
+      .paddingTop(22)
+      .round(true)(root);
+
+    const cell = treemapSvg.selectAll('g')
+      .data(root.descendants().filter(d => d.depth > 0))
+      .join('g')
+      .attr('transform', d => `translate(${d.x0},${d.y0})`);
+
+    cell.append('rect')
+      .attr('class', 'treemap-cell')
+      .attr('width', d => d.x1 - d.x0)
+      .attr('height', d => d.y1 - d.y0)
+      .attr('fill', d => {
+        if (d.depth === 1) return treemapColors(d.data.name);
+        return d3.color(treemapColors(d.parent.data.name)).darker(0.5);
+      })
+      .attr('rx', 4);
+
+    // Add labels for cells with enough space
+    cell.filter(d => (d.x1 - d.x0) > 60 && (d.y1 - d.y0) > 30)
+      .append('text')
+      .attr('class', 'treemap-label')
+      .attr('x', 6)
+      .attr('y', 16)
+      .text(d => {
+        const name = d.data.name;
+        const maxLen = Math.floor((d.x1 - d.x0 - 12) / 6);
+        return name.length > maxLen ? name.substring(0, maxLen) + '...' : name;
+      });
+
+    cell.filter(d => (d.x1 - d.x0) > 50 && (d.y1 - d.y0) > 45)
+      .append('text')
+      .attr('class', 'treemap-value')
+      .attr('x', 6)
+      .attr('y', 30)
+      .text(d => d.value + ' jobs');
+
+    // Tooltip
+    const tooltip = document.getElementById('tooltip');
+    
+    cell.on('mouseenter', (event, d) => {
+      tooltip.querySelector('.tooltip-title').textContent = d.data.name;
+      tooltip.querySelector('.tooltip-value').textContent = `${d.value} jobs`;
+      tooltip.classList.add('visible');
+    })
+    .on('mousemove', (event) => {
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 30) + 'px';
+    })
+    .on('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      const newWidth = container.clientWidth - 32;
+      treemapSvg.attr('width', newWidth);
+      // Would need to re-run treemap layout for full responsiveness
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+# Python (legacy - removed)
+python/
+
+# Distribution / packaging
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js (in llm-etl-analysis/ directory)
+llm-etl-analysis/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+llm-etl-analysis/dist/
+*.tsbuildinfo
+
+# Data folder - ignore all contents but keep structure
+data/**/*
+!data/.gitkeep
+
+# Screenshots
+data/screenshots/
+
+# Authentication files (if users provide their own)
+data/processed/*-auth.json
+data/processed/session-*.json
+
