@@ -66,6 +66,68 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
    # Edit .env and add your OpenAI API key
    ```
 
+### CDP Setup (Chrome DevTools Protocol)
+
+The scraper can connect to a manually launched browser via CDP for better automation detection bypass. This is recommended for scraping sites with anti-bot protection.
+
+**Windows:**
+
+1. **Chrome:**
+   ```bash
+   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="%TEMP%\chrome_profile_cdp"
+   ```
+
+2. **Brave:**
+   ```bash
+   "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" --remote-debugging-port=9222 --user-data-dir="%TEMP%\brave_profile_cdp"
+   ```
+
+3. **Edge:**
+   ```bash
+   "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9222 --user-data-dir="%TEMP%\edge_profile_cdp"
+   ```
+
+**Ubuntu/Linux:**
+
+1. **Chrome:**
+   ```bash
+   google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome_profile_cdp
+   ```
+
+2. **Chromium:**
+   ```bash
+   chromium-browser --remote-debugging-port=9222 --user-data-dir=/tmp/chromium_profile_cdp
+   ```
+
+3. **Brave:**
+   ```bash
+   brave-browser --remote-debugging-port=9222 --user-data-dir=/tmp/brave_profile_cdp
+   ```
+
+**macOS:**
+
+1. **Chrome:**
+   ```bash
+   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome_profile_cdp
+   ```
+
+2. **Brave:**
+   ```bash
+   /Applications/Brave\ Browser.app/Contents/MacOS/Brave\ Browser --remote-debugging-port=9222 --user-data-dir=/tmp/brave_profile_cdp
+   ```
+
+3. **Edge:**
+   ```bash
+   /Applications/Microsoft\ Edge.app/Contents/MacOS/Microsoft\ Edge --remote-debugging-port=9222 --user-data-dir=/tmp/edge_profile_cdp
+   ```
+
+**Notes:**
+- The scraper will automatically try ports: `9222`, `9223`, `9224`, `9229`
+- Close all other browser windows before launching with CDP
+- The `--user-data-dir` flag creates a separate profile to avoid conflicts
+- After launching the browser, run `npm run scrape` in a separate terminal
+- The browser window will remain open and visible during scraping
+
 ### Basic Usage
 
 1. **Prepare your data**:
@@ -83,10 +145,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
    npm run scrape           # Scrape jobs from job_urls.json
    ```
    
-   **Note**: The scraper can connect to a manually launched browser via CDP for better automation detection bypass. Launch Chrome/Brave with:
-   ```bash
-   "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe" --remote-debugging-port=9222
-   ```
+   **Tip**: For better automation detection bypass, launch your browser with CDP first (see CDP Setup section above), then run the scraper.
 
 4. **Analyze with ML**:
    ```bash
@@ -140,7 +199,9 @@ URL_PATTERN=https://...        # Optional: URL extraction pattern
 ## Workflow
 
 1. **Data Collection**: Extract URLs from emails or provide directly
-2. **Web Scraping**: Scrape HTML pages using Playwright (with CDP support for stealth)
+2. **Web Scraping**: Scrape HTML pages using Playwright
+   - **Recommended**: Launch browser with CDP (see CDP Setup section) for better automation detection bypass
+   - **Alternative**: Scraper can run in headless mode, but may be more easily detected
 3. **LLM Extraction**: Extract structured data using GPT-4o-mini
 4. **Embedding Generation**: Create semantic vectors with OpenAI
 5. **Clustering**: Discover patterns with K-means (silhouette score optimization)
@@ -149,7 +210,7 @@ URL_PATTERN=https://...        # Optional: URL extraction pattern
 **Notes:**
 - Private listings are automatically detected and skipped
 - Cloudflare challenges may require manual intervention
-- The scraper supports both headless mode and CDP connection for better automation detection bypass
+- CDP connection allows the scraper to control a real browser instance, making it harder to detect as automated
 
 ## Output Files
 
