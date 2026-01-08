@@ -128,6 +128,76 @@ The scraper can connect to a manually launched browser via CDP for better automa
 - After launching the browser, run `npm run scrape` in a separate terminal
 - The browser window will remain open and visible during scraping
 
+### Email Setup (Optional)
+
+If you want to extract job URLs from email notifications, follow these steps:
+
+#### Downloading Emails from Gmail
+
+1. **Go to Google Takeout**:
+   - Visit https://takeout.google.com/
+   - Sign in with your Gmail account
+
+2. **Select Mail**:
+   - Click "Deselect all"
+   - Check "Mail" only (or select specific labels/folders)
+   - Click "Next step"
+
+3. **Configure Export**:
+   - **File type**: Choose "MBOX" format
+   - **Delivery method**: Email download link or Google Drive
+   - **Frequency**: One-time export
+   - Click "Create export"
+
+4. **Download**:
+   - Wait for Google to prepare your export (may take hours for large mailboxes)
+   - Download the ZIP file when ready
+   - Extract the ZIP file to find `Mail/All mail Including Spam and Trash.mbox` (or similar)
+
+#### Converting MBOX to JSON
+
+You'll need to convert the MBOX file to JSON format. Here are a few options:
+
+**Option 1: Using Python (Recommended)**
+
+1. **Install mbox-to-json**:
+   ```bash
+   pip install mbox-to-json
+   ```
+
+2. **Convert mbox to JSON**:
+   ```bash
+   mbox-to-json "path/to/your/Mail/All mail Including Spam and Trash.mbox" -o data/raw/emails.json
+   ```
+
+**Option 2: Using Online Tools**
+
+- Use online MBOX to JSON converters (search for "mbox to json converter")
+- Upload your mbox file and download the JSON output
+- Place the JSON file as `data/raw/emails.json`
+
+**Option 3: Custom Script**
+
+If you have a custom conversion script, ensure the output JSON has this structure:
+```json
+[
+  {
+    "From": "sender@example.com",
+    "To": "recipient@example.com",
+    "Subject": "Email subject",
+    "Body": "Email body text with URLs...",
+    "Date": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+#### Place the JSON File
+
+After conversion, place `emails.json` in the `data/raw/` directory:
+```bash
+cp emails.json data/raw/emails.json
+```
+
 ### Basic Usage
 
 1. **Prepare your data**:
@@ -198,7 +268,9 @@ URL_PATTERN=https://...        # Optional: URL extraction pattern
 
 ## Workflow
 
-1. **Data Collection**: Extract URLs from emails or provide directly
+1. **Data Collection**: 
+   - **Option A**: Download emails from Gmail (see Email Setup section), convert mbox to JSON, filter and extract URLs
+   - **Option B**: Provide job URLs directly in `data/raw/job_urls.json`
 2. **Web Scraping**: Scrape HTML pages using Playwright
    - **Recommended**: Launch browser with CDP (see CDP Setup section) for better automation detection bypass
    - **Alternative**: Scraper can run in headless mode, but may be more easily detected
