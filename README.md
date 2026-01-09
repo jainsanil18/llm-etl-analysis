@@ -11,7 +11,7 @@ This pipeline combines:
 - **Interactive Visualization**: Generates beautiful dashboards with charts and treemaps
 
 ## Architecture
-
+[https://link.excalidraw.com/readonly/EOrknz8KUiIe9pGxpKt1]
 ```
 Email/URL Sources
     ↓
